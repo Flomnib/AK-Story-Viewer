@@ -5,7 +5,7 @@ A Home Screen web app for iPhone. Download story chapters on wifi, and it plays 
 ## Put it online (one time, about 5 minutes)
 
 1. Create a free GitHub account if you don't have one, then make a new **public** repository, e.g. `rhodes-archive`.
-2. Click **Add file → Upload files**, drag in everything in this folder (`index.html`, `app.js`, `sw.js`, `manifest.webmanifest`, `asset-index.json`, the three `.png` icons), and commit.
+2. Click **Add file → Upload files**, drag in everything in this folder (`index.html`, `app.js`, `sw.js`, `manifest.webmanifest`, `asset-index.json`, `reading-order.json`, the three `.png` icons), and commit.
 3. Go to **Settings → Pages**, set Source to **Deploy from a branch**, pick `main` / `(root)`, and save.
 4. After a minute your app is live at `https://<your-username>.github.io/rhodes-archive/`.
 
@@ -15,6 +15,10 @@ A Home Screen web app for iPhone. Download story chapters on wifi, and it plays 
 2. Open **Rhodes Archive from the new icon**. Do your downloads there. The Home Screen app has its own storage, separate from Safari.
 3. Pick a story, tap **Download for offline**, and keep the app open until it finishes.
 4. Switch on Airplane Mode and open a chapter to confirm it plays.
+
+## Reading order
+
+The **Reading Order** tab follows MajorArcana01's Arknights Reading Guide, in chronological (timeline) or English release order. Finished chapters are ticked automatically, the tick box marks a whole entry read, and **Continue** opens the next unread chapter. Integrated Strategies and Reclamation Algorithm entries are played in the game itself, so you tick those by hand.
 
 ## Notes
 
@@ -27,4 +31,4 @@ A Home Screen web app for iPhone. Download story chapters on wifi, and it plays 
 
 ## Data sources
 
-Fan-maintained GitHub mirrors, loaded on demand: story text from Kengxxiao/ArknightsGameData_YoStar (EN), images from fexli/ArknightsResource with Aceship/Arknight-Images as a fallback, and audio from ThiagoVsky/arknights-sound. Arknights and its assets belong to Hypergryph / Yostar. This is a personal fan reader.
+Fan-maintained GitHub mirrors, loaded on demand: story text from ArknightsAssets/ArknightsGamedata (EN), images from ArknightsAssets/ArknightsAssets2 (EN branch) with fexli/ArknightsResource and Aceship/Arknight-Images as fallbacks, and audio from ThiagoVsky/arknights-sound. Arknights and its assets belong to Hypergryph / Yostar. This is a personal fan reader.

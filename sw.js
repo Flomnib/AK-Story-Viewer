@@ -1,8 +1,8 @@
 /* Offline shell + serves downloaded story data from Cache Storage. Bump VERSION when app files change. */
-const VERSION = 'v1';
+const VERSION = 'v4';
 const SHELL = 'ak-shell-' + VERSION;
 const DATA = 'ak-data-v1';
-const FILES = ['./', './index.html', './app.js', './manifest.webmanifest', './asset-index.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const FILES = ['./', './index.html', './app.js', './manifest.webmanifest', './asset-index.json', './reading-order.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

@@ -5,7 +5,9 @@
    Everything downloaded is kept in Cache Storage so it plays with no connection. */
 'use strict';
 
-const DATA = 'https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/en_US/gamedata/';
+const DATA = 'https://raw.githubusercontent.com/ArknightsAssets/ArknightsGamedata/master/en/gamedata/';
+const OLD_DATA = 'https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/en_US/gamedata/';   // v1 downloads
+const AA = 'https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets2/en/assets/dyn/avg/';   // EN art, kept current
 const IMG = 'https://raw.githubusercontent.com/fexli/ArknightsResource/main/';
 const ACE = 'https://raw.githubusercontent.com/Aceship/Arknight-Images/main/';
 const SND = 'https://raw.githubusercontent.com/ThiagoVsky/arknights-sound/main/';
@@ -58,9 +60,11 @@ async function loadIndex() {
 async function loadVars() { try { VARS = await cachedJSON(VARS_URL); } catch { VARS = {}; } }
 const sv = v => { if (v == null) return ''; v = String(v).trim(); if (v.startsWith('$') && VARS[v.slice(1)] != null) return String(VARS[v.slice(1)]).trim(); return v; };
 
+const aaUrl = rest => AA + rest.split('/').map(encodeURIComponent).join('/');
 function imgCandidates(name) {
   name = sv(name); if (!name) return [];
   const k = name.toLowerCase(), out = [];
+  if (IDX.aa) for (const m of [IDX.aa.bg, IDX.aa.img, IDX.aa.item]) if (m[k]) out.push(aaUrl(m[k]));
   for (const m of [IDX.bg, IDX.img, IDX.item]) if (m[k]) out.push(IMG + m[k]);
   if (!out.length) out.push(IMG + 'avgs/bg/' + name + '.png', IMG + 'avgs/' + name + '.png', IMG + 'avgs/items/' + name + '.png');
   return out;
@@ -76,6 +80,10 @@ function charCandidates(raw) {
   fx.push(`${base}_1`, `${base}_${last}`, base);
   if (face) fx.push(`${base}_1_${face}`);
   const out = [];
+  if (IDX.aa) {
+    const ax2 = [n, face ? `${base}#${face}` : null, variant ? null : `${base}#${face || 1}$1`, base, `${base}#1`];
+    for (const x of ax2) { const hit = x && IDX.aa.chr[x.toLowerCase()]; if (hit) out.push(aaUrl(hit)); }
+  }
   for (const x of fx) { const hit = NPC.get(x.toLowerCase()); if (hit) out.push(IMG + 'avgs/npcs/' + hit + '.png'); }
   const m = base.match(/^(.*)_(\d+)$/), ax = [];
   if (face) ax.push(`${base}#${face}`, `${base}_${face}`);
@@ -141,12 +149,27 @@ function collectAssets(cmds) {
 /* ---------- library data ---------- */
 let REVIEW = null;
 const CATS = [
+  { id: 'ORDER', label: 'Reading Order' },
   { id: 'MAINLINE', label: 'Main Theme' },
   { id: 'ACTIVITY', label: 'Side Stories' },
   { id: 'MINI_ACTIVITY', label: 'Vignettes' },
   { id: 'NONE', label: 'Operator Records' },
 ];
 const storyUrl = s => DATA + 'story/' + s.storyTxt + '.txt';
+const oldStoryUrl = s => OLD_DATA + 'story/' + s.storyTxt + '.txt';
+/* Script text: this source first, then a copy saved by the first version of the app, then the network. */
+async function storyText(s) {
+  const c = await cache();
+  const hit = (await c.match(storyUrl(s))) || (await c.match(oldStoryUrl(s)));
+  if (hit) return hit.text();
+  return cachedText(storyUrl(s));
+}
+async function storySaved(s) { const c = await cache(); return !!((await c.match(storyUrl(s))) || (await c.match(oldStoryUrl(s)))); }
+
+/* ---------- reading progress (finished chapters) ---------- */
+let doneSet = new Set(store.get('done', []));
+const storyKey = s => s.storyId;
+function markDone(s, on = true) { on ? doneSet.add(storyKey(s)) : doneSet.delete(storyKey(s)); store.set('done', [...doneSet]); }
 function groupLabel(g) {
   if (g.entryType === 'MAINLINE') { const n = g.id.match(/main_(\d+)/); return n ? 'Episode ' + n[1].padStart(2, '0') : 'Main'; }
   return g.entryType === 'NONE' ? 'Record' : g.entryType === 'MINI_ACTIVITY' ? 'Vignette' : 'Event';
@@ -164,32 +187,64 @@ const saveGroups = () => store.set('groups', groupsMeta);
 
 /* ---------- downloader ---------- */
 const dl = { active: null, queue: [] };
+/* Wait until the app is in the foreground and online again (iOS freezes pages when the screen locks). */
+async function untilActive() {
+  while (document.hidden || !navigator.onLine) await sleep(800);
+}
+/* Returns {url, bytes} when saved, {missing:true} when no source has the file (404s),
+   or {failed:true} when the network kept dropping, so a later Resume retries it. */
 async function fetchFirst(cands) {
   const c = await cache();
   for (const u of cands) { const hit = await c.match(u); if (hit) return { url: u, bytes: 0, cached: true }; }
+  let netErr = false;
   for (const u of cands) {
-    try {
-      const r = await fetch(u, { mode: 'cors' });
-      if (!r.ok) continue;
-      const blob = await r.blob();
-      await c.put(u, new Response(blob, { headers: { 'Content-Type': r.headers.get('Content-Type') || '' } }));
-      return { url: u, bytes: blob.size };
-    } catch (e) { if (!navigator.onLine) throw e; }
+    for (let attempt = 0; attempt < 4; attempt++) {
+      await untilActive();
+      try {
+        const r = await fetch(u, { mode: 'cors', cache: 'no-store' });
+        if (r.status === 404) break;
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const blob = await r.blob();
+        await c.put(u, new Response(blob, { headers: { 'Content-Type': r.headers.get('Content-Type') || '' } }));
+        return { url: u, bytes: blob.size };
+      } catch (e) {
+        if (e && e.name === 'QuotaExceededError') throw new Error('Your phone is out of space for downloads. Free up storage or remove another story.');
+        netErr = true; await sleep(700 * (attempt + 1));
+      }
+    }
   }
-  return null;
+  return netErr ? { failed: true } : { missing: true };
+}
+let wakeLock = null;
+async function holdAwake(on) {
+  try {
+    if (on && !wakeLock && navigator.wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener?.('release', () => { wakeLock = null; }); }
+    if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch {}
 }
 async function downloadGroup(g, onProgress) {
   if (!navigator.onLine) throw new Error('You are offline. Connect to wifi to download.');
   await cachedFetch(VARS_URL); await loadVars();
-  const list = stories(g), urls = new Set(), assets = new Map();
-  let done = 0, bytes = 0, missing = 0;
+  const list = stories(g), prev = groupsMeta[g.id] || {};
+  const urls = new Set(prev.urls || []), assets = new Map();
+  let done = 0, bytes = 0, missing = 0, failed = 0, sinceSave = 0;
+  const persist = (complete) => {
+    groupsMeta[g.id] = { urls: [...urls], bytes: Math.max(prev.bytes || 0, (prev.bytes || 0) + bytes), missing, failed, date: Date.now(), complete };
+    saveGroups(); flushRes();
+  };
   onProgress({ phase: 'Scripts', done: 0, total: list.length, bytes });
   for (const s of list) {
     const u = storyUrl(s);
-    try { const txt = await cachedText(u); urls.add(u); collectAssets(parseScript(txt)).forEach(x => assets.set(x.kind + ':' + x.name, x)); }
-    catch { missing++; }
+    let txt = null;
+    for (let attempt = 0; attempt < 4 && txt == null; attempt++) {
+      await untilActive();
+      try { txt = await storyText(s); } catch { await sleep(700 * (attempt + 1)); }
+    }
+    if (txt != null) { urls.add(u); collectAssets(parseScript(txt)).forEach(x => assets.set(x.kind + ':' + x.name, x)); }
+    else failed++;
     onProgress({ phase: 'Scripts', done: ++done, total: list.length, bytes });
   }
+  persist(false);
   const items = [...assets.values()]; done = 0;
   onProgress({ phase: 'Art & music', done, total: items.length, bytes });
   let i = 0;
@@ -197,18 +252,18 @@ async function downloadGroup(g, onProgress) {
     while (i < items.length) {
       if (dl.cancel) return;
       const it = items[i++], key = it.kind + ':' + it.name;
-      const r = await fetchFirst(CAND[it.kind](it.name)).catch(() => null);
-      if (r) { RES[key] = r.url; urls.add(r.url); bytes += r.bytes; } else { RES[key] = ''; missing++; }
+      const r = await fetchFirst(CAND[it.kind](it.name));
+      if (r.url) { RES[key] = r.url; urls.add(r.url); bytes += r.bytes; }
+      else if (r.missing) { RES[key] = ''; missing++; }
+      else failed++;
       resDirty = true;
+      if (++sinceSave >= 15) { sinceSave = 0; persist(false); }
       onProgress({ phase: 'Art & music', done: ++done, total: items.length, bytes });
     }
   };
   await Promise.all(Array.from({ length: 6 }, worker));
-  flushRes();
-  const prev = groupsMeta[g.id] || {};
-  groupsMeta[g.id] = { urls: [...urls], bytes: (prev.complete ? prev.bytes : 0) + bytes, missing, date: Date.now(), complete: !dl.cancel };
-  if (!groupsMeta[g.id].bytes) groupsMeta[g.id].bytes = await sizeOf([...urls]);
-  saveGroups();
+  persist(!dl.cancel && failed === 0);
+  if (!groupsMeta[g.id].bytes) { groupsMeta[g.id].bytes = await sizeOf([...urls]); saveGroups(); }
   return groupsMeta[g.id];
 }
 async function sizeOf(urls) {
@@ -322,8 +377,9 @@ const SLOT_X = { l: -300, m: 0, r: 300 };
 const SLOT_ALIAS = { left: 'l', middle: 'm', right: 'r', l: 'l', m: 'm', r: 'r', center: 'm' };
 
 class Player {
-  constructor(group, storyIdx) {
+  constructor(group, storyIdx, stopAt) {
     this.group = group; this.list = stories(group); this.idx = storyIdx;
+    this.stopAt = Math.min(stopAt ?? this.list.length, this.list.length);   // a reading-order entry can cover part of a group
     this.root = $('#player'); this.stage = $('#stage'); this.scene = $('#scene');
     this.urls = new Map(); this.auto = false; this.skip = false; this.closed = false;
     this.log = [];
@@ -352,7 +408,12 @@ class Player {
     this.urls.forEach(u => URL.revokeObjectURL(u));
     this.root.hidden = true; document.body.classList.remove('reading');
     try { screen.orientation?.unlock?.(); } catch {}
-    renderGroup(this.group.id);
+    renderGroup(this.group.id, this.orderCtx ? { view: this.orderCtx.view, index: this.orderCtx.index } : undefined);
+  }
+  closeQuiet() {
+    this.closed = true; this.tapResolve?.(); this.tw?.finish(); audio.stopAll();
+    this.root.removeEventListener('click', this.onTap); document.removeEventListener('keydown', this.onKey); window.removeEventListener('resize', this.onResize);
+    this.urls.forEach(u => URL.revokeObjectURL(u));
   }
   /* time helpers */
   t(sec) { return this.instant ? 0 : this.skip ? Math.min(sec, 0.05) : sec; }
@@ -375,7 +436,7 @@ class Player {
     const veil = $('#pLoading'); veil.hidden = false; veil.querySelector('b').textContent = s.storyName;
     const bar = veil.querySelector('i');
     let txt;
-    try { txt = await cachedText(storyUrl(s)); }
+    try { txt = await storyText(s); }
     catch { veil.querySelector('p').textContent = 'This chapter is not downloaded and you are offline.'; return false; }
     this.cmds = parseScript(txt);
     const items = collectAssets(this.cmds); let n = 0;
@@ -416,7 +477,8 @@ class Player {
       await this.run(saved);
       if (this.closed) return;
       store.set('pos', { group: this.group.id, idx: this.idx + 1, line: 0 });
-      if (this.idx + 1 >= this.list.length) { await this.endCard(null); return; }
+      markDone(this.list[this.idx]);
+      if (this.idx + 1 >= this.stopAt) { await this.endCard(null); return; }
       if (!(await this.endCard(this.list[this.idx + 1]))) return;
       this.idx++;
     }
@@ -425,7 +487,9 @@ class Player {
     return new Promise(res => {
       audio.stopAll();
       const box = $('#choices'); box.innerHTML = ''; box.hidden = false;
-      const t = el('div', 'end-title', next ? 'Chapter complete' : 'End of ' + esc(this.group.name)); box.append(t);
+      const t = el('div', 'end-title', next ? 'Chapter complete' : 'End of ' + esc(this.orderCtx?.entry.title || this.group.name)); box.append(t);
+      const after = !next && this.orderCtx ? nextEntryAfter(this.orderCtx.view, this.orderCtx.index) : null;
+      if (after) { const b = el('button', 'choice', 'Next in reading order: ' + esc(after.entry.title)); b.onclick = e => { e.stopPropagation(); box.hidden = true; res(false); this.closeQuiet(); openEntry(this.orderCtx.view, after.index); }; box.append(b); }
       if (next) { const b = el('button', 'choice', 'Next: ' + esc([next.storyCode, next.storyName].filter(Boolean).join(' ') + (next.avgTag ? ' (' + next.avgTag + ')' : ''))); b.onclick = e => { e.stopPropagation(); box.hidden = true; res(true); }; box.append(b); }
       const q = el('button', 'choice ghost', 'Back to chapter list'); q.onclick = e => { e.stopPropagation(); box.hidden = true; res(false); this.close(); }; box.append(q);
     });
@@ -570,7 +634,7 @@ class Player {
   async background(a) {
     const layer = $('#bgLayer'), url = this.src('img', a.image);
     const fade = this.t(num(a.fadetime, 0));
-    const im = el('img', 'bg'); im.alt = '';
+    const im = el('img', 'bg'); im.alt = ''; im.onerror = () => { im.style.visibility = 'hidden'; };
     if (url) im.src = url;
     const xs = num(a.xscale, 1), ys = num(a.yscale, 1);
     im.style.transform = `translate(${num(a.x, 0)}px, ${-num(a.y, 0)}px) scale(${xs}, ${ys})`;
@@ -588,7 +652,7 @@ class Player {
       if (bool(a.block) && fade) await sleep(fade * 1000);
       return;
     }
-    const im = el('img', 'cg'); im.alt = ''; const url = this.src('img', a.image); if (url) im.src = url;
+    const im = el('img', 'cg'); im.alt = ''; im.onerror = () => { im.style.visibility = 'hidden'; }; const url = this.src('img', a.image); if (url) im.src = url;
     im.dataset.x = num(a.x, 0); im.dataset.y = num(a.y, 0); im.dataset.xs = num(a.xscale, 1); im.dataset.ys = num(a.yscale, 1);
     setXform(im);
     im.style.opacity = fade ? 0 : 1; layer.append(im);
@@ -633,7 +697,7 @@ class Player {
     const old = [...s.children];
     old.forEach(o => { o.style.transition = `opacity ${fade}s`; o.style.opacity = 0; setTimeout(() => o.remove(), fade * 1000 + 50); });
     if (!url) return;
-    const im = el('img', 'spr'); im.alt = ''; im.src = url; im.style.opacity = 0; s.append(im);
+    const im = el('img', 'spr'); im.alt = ''; im.onerror = () => { im.style.visibility = 'hidden'; }; im.src = url; im.style.opacity = 0; s.append(im);
     im.getBoundingClientRect(); im.style.transition = `opacity ${fade}s`; im.style.opacity = 1;
   }
   applyFocus() {
@@ -749,7 +813,7 @@ function layoutStage() {
 }
 
 /* ---------- library UI ---------- */
-let currentCat = store.get('cat', 'MAINLINE'), query = '';
+let currentCat = store.get('cat', 'ORDER'), query = '';
 function setStatus() {
   const on = navigator.onLine;
   $('#net').textContent = on ? 'Online' : 'Offline';
@@ -771,6 +835,7 @@ function renderTabs() {
   });
 }
 function renderList() {
+  if (currentCat === 'ORDER') return renderOrder();
   const box = $('#list'); box.innerHTML = '';
   const q = query.trim().toLowerCase();
   const onlyDl = $('#onlyDl').checked;
@@ -782,45 +847,55 @@ function renderList() {
     const m = groupsMeta[g.id];
     const row = el('button', 'grow');
     row.innerHTML = `<span class="g-kicker">${esc(groupLabel(g))}</span><span class="g-name">${esc(g.name)}</span>
-      <span class="g-meta">${stories(g).length} parts${m ? ` · <span class="ok">${m.complete ? 'Offline' : 'Partial'} · ${fmtBytes(m.bytes)}</span>` : ''}</span>`;
+      <span class="g-meta">${stories(g).length} parts${m ? ` · <span class="${m.complete ? 'ok' : 'warn'}">${m.complete ? 'Offline' : 'Incomplete'} · ${fmtBytes(m.bytes)}</span>` : ''}</span>`;
     row.onclick = () => renderGroup(g.id);
     box.append(row);
   }
 }
-async function renderGroup(id) {
+async function renderGroup(id, ctx) {
   const g = REVIEW[id]; if (!g) return;
   $('#libView').hidden = true; const v = $('#groupView'); v.hidden = false; window.scrollTo(0, 0);
+  if (ctx === undefined && renderGroup.last?.id === id) ctx = renderGroup.last.ctx;   // returning from the reader
+  renderGroup.last = { id, ctx };
   const m = groupsMeta[g.id];
+  const entry = ctx ? ORDER[ctx.view][ctx.index] : null;
+  const range = entry ? entryRange(entry) : null;
+  const all = stories(g), a = range ? range.a : 0, b = range ? range.b : all.length;
+  const readN = all.slice(a, b).filter(s => doneSet.has(storyKey(s))).length;
   v.innerHTML = `
-    <button class="back" id="back">‹ All stories</button>
-    <header class="gh"><span class="g-kicker">${esc(groupLabel(g))}</span><h2>${esc(g.name)}</h2>
-      <p class="gh-meta">${stories(g).length} parts${m ? ` · downloaded ${new Date(m.date).toLocaleDateString()} · ${fmtBytes(m.bytes)}${m.missing ? ` · ${m.missing} files unavailable` : ''}` : ''}</p></header>
+    <button class="back" id="back">‹ ${ctx ? 'Reading order' : 'All stories'}</button>
+    <header class="gh"><span class="g-kicker">${ctx ? `#${ctx.index + 1} in ${ORDER_VIEWS[ctx.view].toLowerCase()} order · ` : ''}${esc(groupLabel(g))}</span><h2>${esc(entry ? entry.title : g.name)}</h2>
+      <p class="gh-meta">${readN} of ${b - a} read${m ? ` · downloaded ${new Date(m.date).toLocaleDateString()} · ${fmtBytes(m.bytes)}${m.failed ? ` · <span class="warn">${m.failed} files still to download</span>` : ''}` : ''}</p></header>
+    ${entry?.note ? `<p class="entry-note">${esc(entry.note)}</p>` : ''}
     <div class="dlbox">
       <button class="btn primary" id="dlBtn">${m ? (m.complete ? 'Check for missing files' : 'Resume download') : 'Download for offline'}</button>
       ${m ? '<button class="btn" id="delBtn">Remove download</button>' : ''}
       <div class="prog" id="prog" hidden><div class="hazard"><i></i></div><span></span></div>
       <div class="confirm" id="confirmDel" hidden><span>Delete this story's files from your phone?</span><button class="btn danger" id="delYes">Delete</button><button class="btn" id="delNo">Keep</button></div>
     </div>
+    ${range && (a > 0 || b < all.length) ? `<p class="entry-note">This entry covers chapters ${esc(all[a].storyCode)} to ${esc(all[b - 1].storyCode)}. The rest of the episode is listed elsewhere in the order.</p>` : ''}
     <ol class="stories" id="stories"></ol>`;
-  $('#back').onclick = () => { v.hidden = true; $('#libView').hidden = false; renderList(); storageLine(); };
+  $('#back').onclick = () => { renderGroup.last = null; if (ctx) renderOrderBack(); else { v.hidden = true; $('#libView').hidden = false; renderList(); storageLine(); } };
   $('#dlBtn').onclick = () => startDownload(g);
   if (m) {
     $('#delBtn').onclick = () => { $('#confirmDel').hidden = false; };
     $('#delNo').onclick = () => { $('#confirmDel').hidden = true; };
-    $('#delYes').onclick = async () => { await deleteGroup(g.id); renderGroup(g.id); };
+    $('#delYes').onclick = async () => { await deleteGroup(g.id); renderGroup(g.id, ctx); };
   }
   const ol = $('#stories');
   const pos = store.get('pos', {});
-  for (const [k, s] of stories(g).entries()) {
-    const li = el('li');
-    const here = pos.group === g.id && pos.idx === k && pos.line > 0;
-    li.innerHTML = `<button class="srow"><span class="s-code">${esc(s.storyCode || String(k + 1).padStart(2, '0'))}</span>
+  for (let k = a; k < b; k++) {
+    const s = all[k], li = el('li');
+    const here = pos.group === g.id && pos.idx === k && pos.line > 0, read = doneSet.has(storyKey(s));
+    li.innerHTML = `<button class="srow${read ? ' read' : ''}"><span class="s-code">${esc(s.storyCode || String(k + 1).padStart(2, '0'))}</span>
       <span class="s-name">${esc(s.storyName)}${s.avgTag ? `<em>${esc(s.avgTag)}</em>` : ''}</span>
-      <span class="s-state" data-u="${esc(storyUrl(s))}">${here ? 'Resume' : ''}</span></button>`;
-    li.querySelector('button').onclick = () => openReader(g, k);
+      <span class="s-state">${here ? '<b class="warn">Resume</b>' : read ? '<b class="ok">✓ Read</b>' : ''}<small data-k="${k}"></small></span></button>`;
+    li.querySelector('button').onclick = () => openReader(g, k, ctx ? b : undefined, ctx ? { view: ctx.view, index: ctx.index, entry } : undefined);
     ol.append(li);
   }
-  for (const sp of ol.querySelectorAll('.s-state')) if (!sp.textContent && await isCached(sp.dataset.u)) sp.textContent = 'Saved';
+  for (const sm of ol.querySelectorAll('small[data-k]')) {
+    if (await storySaved(all[+sm.dataset.k])) sm.textContent = 'Saved'; else if (m) { sm.textContent = 'Not saved'; sm.classList.add('warn'); }
+  }
   if (dl.active === g.id) attachProgress();
 }
 function attachProgress() {
@@ -828,34 +903,157 @@ function attachProgress() {
   p.hidden = false; $('#dlBtn').disabled = true; $('#dlBtn').textContent = 'Downloading…';
   const ds = dl.state || { phase: 'Starting', done: 0, total: 1, bytes: 0 };
   p.querySelector('i').style.width = (ds.total ? ds.done / ds.total * 100 : 0) + '%';
-  p.querySelector('span').textContent = `${ds.phase}: ${ds.done} / ${ds.total} · ${fmtBytes(ds.bytes)}`;
+  const paused = document.hidden || !navigator.onLine;
+  p.querySelector('span').textContent = paused ? 'Paused: reconnect to wifi and keep this screen open'
+    : `${ds.phase}: ${ds.done} / ${ds.total} · ${fmtBytes(ds.bytes)} · keep the app open until it finishes`;
 }
 async function startDownload(g) {
   if (dl.active) return;
   dl.active = g.id; dl.cancel = false;
   try { await navigator.storage?.persist?.(); } catch {}
   attachProgress();
+  holdAwake(true);
+  const onVis = () => { if (!document.hidden) holdAwake(true); };
+  document.addEventListener('visibilitychange', onVis);
   try {
     const r = await downloadGroup(g, st => { dl.state = st; if (!$('#groupView').hidden && $('#prog')) attachProgress(); });
     dl.active = null; dl.state = null;
-    toast(`Saved ${g.name} for offline · ${fmtBytes(r.bytes)}${r.missing ? ` · ${r.missing} files unavailable` : ''}`);
+    if (r.failed) toast(`${r.failed} files didn't finish downloading. Tap Resume download on wifi before going offline.`);
+    else toast(`Saved ${g.name} for offline · ${fmtBytes(r.bytes)}`);
   } catch (e) {
-    dl.active = null; dl.state = null; toast(e.message || 'Download stopped. Try again on wifi.');
+    dl.active = null; dl.state = null; toast(e.message || 'Download stopped. Tap Resume download on wifi.');
   }
+  document.removeEventListener('visibilitychange', onVis);
+  holdAwake(false);
   if (!$('#groupView').hidden) renderGroup(g.id);
 }
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 4200); }
 
-async function openReader(g, idx) {
+async function openReader(g, idx, stopAt, orderCtx) {
   audio.init();                         // must happen inside the tap for iOS
   document.body.classList.add('reading');
   $('#player').hidden = false;
   try { await screen.orientation?.lock?.('landscape'); } catch {}
   $('#choices').hidden = true; $('#pLogPanel').hidden = true;
   await loadVars();
-  const p = new Player(g, idx);
+  const p = new Player(g, idx, stopAt);
+  p.orderCtx = orderCtx || null;
   p.syncButtons();
   p.start();
+}
+
+
+/* ---------- reading order (MajorArcana01's guide) ---------- */
+let ORDER = null, orderView = store.get('orderView', 'timeline');
+let manualDone = new Set(store.get('manualDone', []));    // entries ticked by hand (in-game modes, or anything)
+const ORDER_VIEWS = { timeline: 'Chronological', release: 'Release' };
+async function loadOrder() { try { ORDER = await (await fetch('reading-order.json')).json(); } catch { ORDER = null; } }
+/* The chapters an entry covers; Episode 15 is split around 15-3 in the timeline. */
+function entryRange(e) {
+  const g = REVIEW[e.group]; if (!g) return null;
+  const list = stories(g); let a = 0, b = list.length;
+  if (e.until) { const k = list.findIndex(s => s.storyCode === e.until); if (k > 0) b = k; }
+  if (e.from) { const k = list.findIndex(s => s.storyCode === e.from); if (k >= 0) a = k; }
+  return { g, list, a, b };
+}
+const entryKey = (view, i) => view + ':' + i + ':' + (ORDER[view][i].group || ORDER[view][i].title);
+function entryProgress(view, i) {
+  const e = ORDER[view][i];
+  if (e.mode || !REVIEW[e.group]) return { total: 0, read: 0, done: manualDone.has(e.title) };
+  const r = entryRange(e), part = r.list.slice(r.a, r.b);
+  const read = part.filter(s => doneSet.has(storyKey(s))).length;
+  return { total: part.length, read, done: manualDone.has(e.title) || (part.length > 0 && read === part.length), r };
+}
+function nextEntryAfter(view, i) {
+  for (let k = i + 1; k < ORDER[view].length; k++) if (!entryProgress(view, k).done) return { entry: ORDER[view][k], index: k };
+  return null;
+}
+function firstUnfinished(view) {
+  for (let k = 0; k < ORDER[view].length; k++) if (!entryProgress(view, k).done) return k;
+  return -1;
+}
+function openEntry(view, i) {
+  const e = ORDER[view][i], p = entryProgress(view, i);
+  if (!p.r) { renderEntrySheet(view, i); return; }
+  const { g, list, a, b } = p.r;
+  let k = a; while (k < b - 1 && doneSet.has(storyKey(list[k]))) k++;
+  openReader(g, k, b, { view, index: i, entry: e });
+}
+function renderOrderBack() { $('#groupView').hidden = true; $('#libView').hidden = false; currentCat = 'ORDER'; renderTabs(); renderList(); storageLine(); }
+function renderOrder() {
+  const box = $('#list'); box.innerHTML = '';
+  if (!ORDER) { box.append(el('p', 'empty', 'Reading order unavailable. Reload once while online.')); return; }
+  const list = ORDER[orderView], q = query.trim().toLowerCase(), onlyDl = $('#onlyDl').checked;
+  const doneN = list.filter((_, i) => entryProgress(orderView, i).done).length;
+  const head = el('div', 'order-head');
+  head.innerHTML = `<div class="seg" role="radiogroup" aria-label="Order">${Object.entries(ORDER_VIEWS).map(([k, v]) =>
+      `<button role="radio" aria-checked="${k === orderView}" class="${k === orderView ? 'on' : ''}" data-v="${k}">${v}</button>`).join('')}</div>
+    <div class="order-prog"><div class="bar"><i style="width:${(doneN / list.length * 100).toFixed(1)}%"></i></div><span>${doneN} of ${list.length} read</span></div>
+    <p class="order-src">Order from ${esc(ORDER.source)}.${orderView === 'release' ? ' English server release order; crossover events are left out.' : ''}</p>`;
+  head.querySelectorAll('.seg button').forEach(b => b.onclick = () => { orderView = b.dataset.v; store.set('orderView', orderView); renderOrder(); });
+  box.append(head);
+  const nx = firstUnfinished(orderView);
+  if (nx >= 0 && !q) {
+    const e = list[nx], p = entryProgress(orderView, nx);
+    const c = el('button', 'continue');
+    c.innerHTML = `<span class="g-kicker">Continue · #${nx + 1}</span><span class="g-name">${esc(e.title)}</span>
+      <span class="g-meta">${e.mode ? 'Played in-game (' + esc(e.mode) + ')' : p.read ? `${p.read} of ${p.total} chapters read` : 'Start here'}</span>`;
+    c.onclick = () => openEntry(orderView, nx);
+    box.append(c);
+  }
+  const ol = el('ol', 'order');
+  list.forEach((e, i) => {
+    if (q && !e.title.toLowerCase().includes(q)) return;
+    if (onlyDl && !(e.group && groupsMeta[e.group])) return;
+    const p = entryProgress(orderView, i), m = e.group && groupsMeta[e.group];
+    const li = el('li', 'oe' + (p.done ? ' done' : '') + (i === nx ? ' next' : ''));
+    const g = REVIEW[e.group];
+    const kind = e.mode ? e.mode : g ? groupLabel(g) : 'Not in the English data yet';
+    const state = p.done ? '<span class="ok">Read</span>' : p.read ? `<span class="warn">${p.read}/${p.total}</span>` : '';
+    li.innerHTML = `<button class="oe-main"><span class="oe-n">${i + 1}</span>
+        <span class="oe-body"><span class="g-kicker">${esc(kind)}</span><span class="oe-title">${esc(e.title)}</span>
+        ${e.note ? `<span class="oe-note">${esc(e.note)}</span>` : ''}</span>
+        <span class="oe-state">${state}${m ? `<span class="${m.complete ? 'ok' : 'warn'} oe-dl">${m.complete ? 'Offline' : 'Partial'}</span>` : ''}</span></button>
+      <button class="oe-check" aria-label="${p.done ? 'Mark unread' : 'Mark read'}" aria-pressed="${p.done}">${p.done ? '✓' : ''}</button>`;
+    li.querySelector('.oe-main').onclick = () => renderEntrySheet(orderView, i);
+    li.querySelector('.oe-check').onclick = () => toggleEntryDone(orderView, i);
+    ol.append(li);
+  });
+  box.append(ol);
+  if (orderView === 'timeline' && !q) {
+    const tl = new Set(ORDER.timeline.map(e => e.group || e.title));
+    const undated = ORDER.release.filter(e => !tl.has(e.group || e.title) && e.group !== 'main_15');
+    const f = el('section', 'undated');
+    f.innerHTML = `<h3>Not placed on the timeline</h3><p>The guide gives no date for these. Its suggestions: ${ORDER.undated.map(esc).join(' ')}</p>
+      <ul>${undated.map(e => `<li><button data-g="${esc(e.group || '')}">${esc(e.title)}</button></li>`).join('')}</ul>`;
+    f.querySelectorAll('button[data-g]').forEach(b => { if (b.dataset.g) b.onclick = () => renderGroup(b.dataset.g); });
+    box.append(f);
+  }
+}
+function toggleEntryDone(view, i) {
+  const e = ORDER[view][i], p = entryProgress(view, i);
+  if (p.done) {
+    manualDone.delete(e.title);
+    if (p.r) p.r.list.slice(p.r.a, p.r.b).forEach(s => markDone(s, false));
+  } else {
+    if (p.r) p.r.list.slice(p.r.a, p.r.b).forEach(s => markDone(s, true)); else manualDone.add(e.title);
+  }
+  store.set('manualDone', [...manualDone]);
+  renderOrder();
+}
+/* Entry sheet: reuse the chapter view for real stories; in-game modes get a short card. */
+function renderEntrySheet(view, i) {
+  const e = ORDER[view][i];
+  if (e.group && REVIEW[e.group]) { renderGroup(e.group, { view, index: i }); return; }
+  $('#libView').hidden = true; const v = $('#groupView'); v.hidden = false; window.scrollTo(0, 0);
+  const done = manualDone.has(e.title);
+  v.innerHTML = `<button class="back" id="back">‹ Reading order</button>
+    <header class="gh"><span class="g-kicker">#${i + 1} · ${esc(e.mode || 'Story')}</span><h2>${esc(e.title)}</h2>
+    <p class="gh-meta">${e.mode ? `This story is told inside the ${esc(e.mode)} game mode, so it's played in Arknights itself rather than read here.` : 'This story isn\'t in the English story data yet.'}</p></header>
+    ${e.note ? `<p class="entry-note">${esc(e.note)}</p>` : ''}
+    <div class="dlbox"><button class="btn ${done ? '' : 'primary'}" id="tick">${done ? 'Mark as unread' : 'Mark as read'}</button></div>`;
+  $('#back').onclick = renderOrderBack;
+  $('#tick').onclick = () => { done ? manualDone.delete(e.title) : manualDone.add(e.title); store.set('manualDone', [...manualDone]); renderOrderBack(); };
 }
 
 /* ---------- settings sheet ---------- */
@@ -891,8 +1089,9 @@ async function boot() {
   try { REVIEW = await cachedJSON(REVIEW_URL); }
   catch { $('#list').innerHTML = '<p class="empty">Open the app once while online to load the story list.</p>'; return; }
   loadVars();
+  await loadOrder();
   if (!navigator.onLine) {   // offline: open on a section that actually has downloads
-    const has = id => Object.keys(groupsMeta).some(g => REVIEW[g]?.entryType === id);
+    const has = id => id === 'ORDER' || Object.keys(groupsMeta).some(g => REVIEW[g]?.entryType === id);
     if (!has(currentCat)) currentCat = (CATS.find(c => has(c.id)) || CATS[0]).id;
   }
   renderTabs(); renderList(); storageLine();

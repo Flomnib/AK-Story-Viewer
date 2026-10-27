@@ -1,0 +1,707 @@
+{
+ "source": "MajorArcana01's Arknights Reading Guide",
+ "release": [
+  {
+   "title": "Prologue: Evil Time Part 1",
+   "group": "main_0"
+  },
+  {
+   "title": "Episode 1: Evil Time Part 2",
+   "group": "main_1"
+  },
+  {
+   "title": "Episode 2: Separated Hearts",
+   "group": "main_2"
+  },
+  {
+   "title": "Episode 3: Stinging Shock",
+   "group": "main_3"
+  },
+  {
+   "title": "Episode 4: Burning Run",
+   "group": "main_4"
+  },
+  {
+   "title": "Grani and the Knight’s Treasure",
+   "group": "1stact"
+  },
+  {
+   "title": "Episode 5: Necessary Solutions",
+   "group": "main_5"
+  },
+  {
+   "title": "Operational Intelligence",
+   "group": "act4d0"
+  },
+  {
+   "title": "Heart of Surging Flame",
+   "group": "act3d0"
+  },
+  {
+   "title": "Code of Brawl",
+   "group": "act5d0"
+  },
+  {
+   "title": "Episode 6: Partial Necrosis",
+   "group": "main_6"
+  },
+  {
+   "title": "Ancient Forge",
+   "group": "act6d5"
+  },
+  {
+   "title": "Stories of Afternoon",
+   "group": "act7d5"
+  },
+  {
+   "title": "Survivors: Children of Ursus",
+   "group": "act10d5"
+  },
+  {
+   "title": "Twilight in Wolumonde",
+   "group": "act11d0"
+  },
+  {
+   "title": "Darknights Memoir",
+   "group": "act9d0"
+  },
+  {
+   "title": "Episode 7: The Birth of Tragedy",
+   "group": "main_7"
+  },
+  {
+   "title": "The Great Chief Returns",
+   "group": "act12d0"
+  },
+  {
+   "title": "Rewinding Breeze",
+   "group": "act13d0"
+  },
+  {
+   "title": "Maria Nearl",
+   "group": "act13d5"
+  },
+  {
+   "title": "Episode 8: Roaring Flare",
+   "group": "main_8"
+  },
+  {
+   "title": "Mansfield Break",
+   "group": "act15d0"
+  },
+  {
+   "title": "Beyond Here",
+   "group": "act15d5"
+  },
+  {
+   "title": "Who is Real",
+   "group": "act16d5"
+  },
+  {
+   "title": "A Walk in the Dust",
+   "group": "act18d0"
+  },
+  {
+   "title": "Under Tides",
+   "group": "act18d3"
+  },
+  {
+   "title": "Preluding Lights",
+   "group": "act7mini"
+  },
+  {
+   "title": "Dossoles Holiday",
+   "group": "act12side"
+  },
+  {
+   "title": "Vigilo",
+   "group": "act8mini"
+  },
+  {
+   "title": "Episode 9: Stormwatch",
+   "group": "main_9"
+  },
+  {
+   "title": "Pinus Sylvestris",
+   "group": "act9mini"
+  },
+  {
+   "title": "Near Light",
+   "group": "act13side"
+  },
+  {
+   "title": "Break the Ice",
+   "group": "act14side"
+  },
+  {
+   "title": "Phantom and Crimson Solitaire",
+   "note": "All endings are canon.",
+   "mode": "Integrated Strategies"
+  },
+  {
+   "title": "Invitation to Wine",
+   "group": "act15side"
+  },
+  {
+   "title": "A Light Spark in the Darkness",
+   "group": "act10mini"
+  },
+  {
+   "title": "Guide Ahead",
+   "group": "act16side"
+  },
+  {
+   "title": "Episode 10: Shatterpoint",
+   "group": "main_10"
+  },
+  {
+   "title": "Stultifera Navis",
+   "group": "act17side"
+  },
+  {
+   "title": "Lingering Echoes",
+   "group": "act18side"
+  },
+  {
+   "title": "Ideal City: Endless Carnival",
+   "group": "act20side"
+  },
+  {
+   "title": "To Be Continued",
+   "group": "act11mini"
+  },
+  {
+   "title": "Dorothy’s Vision",
+   "group": "act19side"
+  },
+  {
+   "title": "An Obscure Wanderer",
+   "group": "act12mini"
+  },
+  {
+   "title": "Episode 11: Return to Mist",
+   "group": "main_11"
+  },
+  {
+   "title": "Il Siracusano",
+   "group": "act21side"
+  },
+  {
+   "title": "Mizuki and Caerula Arbor",
+   "note": "Only the first ending is canon.",
+   "mode": "Integrated Strategies"
+  },
+  {
+   "title": "What the Firelight Casts",
+   "group": "act22side"
+  },
+  {
+   "title": "Where the Vernal Wind Never Blows",
+   "group": "act23side"
+  },
+  {
+   "title": "A Death in Chunfen",
+   "group": "act14mini"
+  },
+  {
+   "title": "Episode 12: All Quiet Under the Thunder",
+   "group": "main_12"
+  },
+  {
+   "title": "Lone Trail",
+   "group": "act25side"
+  },
+  {
+   "title": "Hortus de Escapismo",
+   "group": "act26side"
+  },
+  {
+   "title": "So Long, Adele: Home Away From Home",
+   "group": "act27side"
+  },
+  {
+   "title": "The Black Forest Wills a Dream",
+   "group": "act15mini"
+  },
+  {
+   "title": "Expeditioner’s Jǫklumarkar",
+   "note": "All endings are canon.",
+   "mode": "Integrated Strategies"
+  },
+  {
+   "title": "Come Catastrophes or Wakes of Vultures",
+   "group": "act28side"
+  },
+  {
+   "title": "Episode 13: The Whirlpool that is Passion",
+   "group": "main_13"
+  },
+  {
+   "title": "Zwillingstürme im Herbst",
+   "group": "act29side"
+  },
+  {
+   "title": "The Rides to Lake Silberneherze",
+   "group": "act30side"
+  },
+  {
+   "title": "To the Grinning Valley",
+   "group": "act16mini"
+  },
+  {
+   "title": "Here a People Sows",
+   "group": "act31side"
+  },
+  {
+   "title": "Tales Within the Sand",
+   "mode": "Reclamation Algorithm"
+  },
+  {
+   "title": "Babel",
+   "group": "act33side"
+  },
+  {
+   "title": "Episode 14: Absolved Will Be the Seekers",
+   "group": "main_14"
+  },
+  {
+   "title": "Path of Life",
+   "group": "act34side"
+  },
+  {
+   "title": "Adventure that Cannot Wait For the Sun",
+   "group": "act35side"
+  },
+  {
+   "title": "A Kazdelian Rescue",
+   "group": "act17mini"
+  },
+  {
+   "title": "Sarkaz Furnaceside Fables",
+   "note": "Only the first ending is canon",
+   "mode": "Integrated Strategies"
+  },
+  {
+   "title": "Ending a Grand Overture",
+   "group": "act37side"
+  },
+  {
+   "title": "I Portatori dei Velluti",
+   "group": "act38side"
+  },
+  {
+   "title": "Exodus from the Pale Sea",
+   "group": "act39side"
+  },
+  {
+   "title": "Such is the Joy of Our Reunion",
+   "group": "act40side"
+  },
+  {
+   "title": "See You Soon",
+   "group": "act18mini"
+  },
+  {
+   "title": "When Elegies are Ashes",
+   "group": "act41side"
+  },
+  {
+   "title": "Episode 15: Dissociative Recombination",
+   "group": "main_15"
+  },
+  {
+   "title": "The Masses’ Travel",
+   "group": "act42side"
+  },
+  {
+   "title": "Act or Die",
+   "group": "act43side"
+  },
+  {
+   "title": "Fantasy in the Mirage",
+   "group": "act19mini"
+  },
+  {
+   "title": "Sui’s Garden of Grotesqueries",
+   "note": "All endings are canon.",
+   "mode": "Integrated Strategies"
+  },
+  {
+   "title": "Ato",
+   "group": "act44side"
+  },
+  {
+   "title": "Episode 16: Abnormal Spectrum",
+   "group": "main_16"
+  },
+  {
+   "title": "Retracing Our Steps",
+   "group": "act46side"
+  },
+  {
+   "title": "Unrealized Realities",
+   "group": "act47side"
+  },
+  {
+   "title": "Medjehtiqedti Bound",
+   "group": "act48side"
+  },
+  {
+   "title": "First of a Thousand Autumns",
+   "group": "act49side"
+  },
+  {
+   "title": "Crossing",
+   "group": "act20mini"
+  },
+  {
+   "title": "People, a People",
+   "group": "act51side"
+  },
+  {
+   "title": "Episode 17: Critical Phase Transition",
+   "group": "main_17"
+  }
+ ],
+ "timeline": [
+  {
+   "title": "A Walk in the Dust",
+   "note": "All three sections of A Walk in the Dust happen before anything else in the timeline.",
+   "group": "act18d0"
+  },
+  {
+   "title": "Babel",
+   "group": "act33side"
+  },
+  {
+   "title": "Darknights Memoir",
+   "note": "Darknights Memoir technically takes place in the middle of Babel. Around BB-7.",
+   "group": "act9d0"
+  },
+  {
+   "title": "Prologue: Evil Time Part 1",
+   "group": "main_0"
+  },
+  {
+   "title": "Episode 1: Evil Time Part 2",
+   "group": "main_1"
+  },
+  {
+   "title": "Episode 2: Separated Hearts",
+   "group": "main_2"
+  },
+  {
+   "title": "Episode 3: Stinging Shock",
+   "group": "main_3"
+  },
+  {
+   "title": "Survivors: Children of Ursus",
+   "note": "The exact time Children of Ursus takes place is uncertain, especially since it’s told mainly in flashbacks. The flashback portions should take place after the Prologue but before Episode 4.",
+   "group": "act10d5"
+  },
+  {
+   "title": "Episode 4: Burning Run",
+   "group": "main_4"
+  },
+  {
+   "title": "Episode 5: Necessary Solutions",
+   "group": "main_5"
+  },
+  {
+   "title": "Episode 6: Partial Necrosis",
+   "group": "main_6"
+  },
+  {
+   "title": "Episode 7: The Birth of Tragedy",
+   "group": "main_7"
+  },
+  {
+   "title": "Episode 8: Roaring Flare",
+   "note": "Contains significant backstory sections that happen between A Walk in the Dust and Babel",
+   "group": "main_8"
+  },
+  {
+   "title": "Mansfield Break",
+   "group": "act15d0"
+  },
+  {
+   "title": "Grani and the Knight’s Treasure",
+   "group": "1stact"
+  },
+  {
+   "title": "Heart of Surging Flame",
+   "group": "act3d0"
+  },
+  {
+   "title": "Dossoles Holiday",
+   "group": "act12side"
+  },
+  {
+   "title": "Maria Nearl",
+   "group": "act13d5"
+  },
+  {
+   "title": "Pinus Sylvestris",
+   "group": "act9mini"
+  },
+  {
+   "title": "Near Light",
+   "group": "act13side"
+  },
+  {
+   "title": "Twilight in Wolumonde",
+   "group": "act11d0"
+  },
+  {
+   "title": "Code of Brawl",
+   "group": "act5d0"
+  },
+  {
+   "title": "A Light Spark in the Darkness",
+   "group": "act10mini"
+  },
+  {
+   "title": "Break the Ice",
+   "group": "act14side"
+  },
+  {
+   "title": "Episode 9: Stormwatch",
+   "group": "main_9"
+  },
+  {
+   "title": "The Great Chief Returns",
+   "group": "act12d0"
+  },
+  {
+   "title": "Episode 10: Shatterpoint",
+   "group": "main_10"
+  },
+  {
+   "title": "Episode 11: Return to Mist",
+   "group": "main_11"
+  },
+  {
+   "title": "What the Firelight Casts",
+   "group": "act22side"
+  },
+  {
+   "title": "Episode 12: All Quiet Under the Thunder",
+   "group": "main_12"
+  },
+  {
+   "title": "Episode 13: The Whirlpool that is Passion",
+   "group": "main_13"
+  },
+  {
+   "title": "Episode 14: Absolved Will Be the Seekers",
+   "group": "main_14"
+  },
+  {
+   "title": "See You Soon",
+   "note": "See You Soon takes place in the middle of Episode 14",
+   "group": "act18mini"
+  },
+  {
+   "title": "Episode 15: Dissociative Recombination (15-1 to 15-2)",
+   "note": "Episode 15 is really weird in that it’s first two nodes take place immediately after Episode 14 and the the flashback portions of Ending a Grand Overture, but then the rest of it happens a whole two years later after like half of all side stories, which is weirdly split up on the timeline like this. Ideally this would be sandwiched between the flashback parts and the present parts of Ending a Grand Overture, put the two parts of the intermezzo are too connected for me to cleanly split them up, some I’m just going to put this here since Ending a Grand Overture is framed in flashbacks from after the war so technically it would be after this in the timeline.",
+   "group": "main_15",
+   "until": "15-3"
+  },
+  {
+   "title": "Ending a Grand Overture",
+   "note": "takes place in two sections, one section is right after Episode 14, the other is two months later.",
+   "group": "act37side"
+  },
+  {
+   "title": "When Elegies are Ashes",
+   "note": "Exact date is uncertain, but it takes place shortly after the conclusion of the Londinium Crisis",
+   "group": "act41side"
+  },
+  {
+   "title": "Under Tides",
+   "group": "act18d3"
+  },
+  {
+   "title": "Guide Ahead",
+   "group": "act16side"
+  },
+  {
+   "title": "So Long, Adele: Home Away From Home",
+   "group": "act27side"
+  },
+  {
+   "title": "Ato",
+   "group": "act44side"
+  },
+  {
+   "title": "Dorothy’s Vision",
+   "group": "act19side"
+  },
+  {
+   "title": "Hortus de Escapismo",
+   "group": "act26side"
+  },
+  {
+   "title": "Il Siracusano",
+   "group": "act21side"
+  },
+  {
+   "title": "Lingering Echoes",
+   "group": "act18side"
+  },
+  {
+   "title": "Lone Trail",
+   "group": "act25side"
+  },
+  {
+   "title": "Come Catastrophes or Wakes of Vultures",
+   "group": "act28side"
+  },
+  {
+   "title": "Tales Within the Sand",
+   "note": "We don’t have an exact date for this event but it must happen before Adventure that Cannot Wait for the Sun",
+   "mode": "Reclamation Algorithm"
+  },
+  {
+   "title": "Adventure that Cannot Wait For the Sun",
+   "group": "act35side"
+  },
+  {
+   "title": "Ideal City: Endless Carnival",
+   "group": "act20side"
+  },
+  {
+   "title": "Phantom and Crimson Solitaire",
+   "note": "We don’t have an exact date for this, but it must happen before Act or Die. All endings are canon.",
+   "mode": "Integrated Strategies"
+  },
+  {
+   "title": "Act or Die",
+   "note": "We don’t have an exact date for this but it must happen before Medjehtiqeti Bound.",
+   "group": "act43side"
+  },
+  {
+   "title": "Medjehtiqedti Bound",
+   "group": "act48side"
+  },
+  {
+   "title": "Zwillingstürme im Herbst",
+   "group": "act29side"
+  },
+  {
+   "title": "Stultifera Navis",
+   "group": "act17side"
+  },
+  {
+   "title": "Path of Life",
+   "group": "act34side"
+  },
+  {
+   "title": "Mizuki and Caerula Arbor",
+   "note": "Only the first ending is canon.",
+   "mode": "Integrated Strategies"
+  },
+  {
+   "title": "I Portatori dei Velluti",
+   "group": "act38side"
+  },
+  {
+   "title": "Crossing",
+   "note": "We do not have an exact date for this storyline, but it has to take place after I Portatori dei Velluti.",
+   "group": "act20mini"
+  },
+  {
+   "title": "Episode 15: Dissociative Recombination (15-3 to 15-21)",
+   "note": "Episode 15 is really weird in that it’s first two nodes take place immediately after Episode 14 and the the flashback portions of Ending a Grand Overture, but then the rest of it happens a whole two years later after like half of all side stories, which is weirdly split up on the timeline like this.",
+   "group": "main_15",
+   "from": "15-3"
+  },
+  {
+   "title": "The Masses’ Travel",
+   "group": "act42side"
+  },
+  {
+   "title": "Episode 16: Abnormal Spectrum",
+   "group": "main_16"
+  },
+  {
+   "title": "Retracing Our Steps",
+   "group": "act46side"
+  },
+  {
+   "title": "The Black Forest Wills a Dream",
+   "note": "While we don’t have an exact date for this storyline or Expeditioner’s Jǫklumarkar, due to the appearance of a certain character in Unrealized Realities, it must take place before that event.",
+   "group": "act15mini"
+  },
+  {
+   "title": "Expeditioner’s Jǫklumarkar",
+   "note": "All endings are canon.",
+   "mode": "Integrated Strategies"
+  },
+  {
+   "title": "A Kazdelian Rescue",
+   "note": "While we don’t have an exact date for this storyline, a certain character in Unrealized Realities makes references to the events of this storyline and Sarkaz Furnanceside Fables in the past tense, meaning this event has to take place before it in the timeline.",
+   "group": "act17mini"
+  },
+  {
+   "title": "Sarkaz Furnaceside Fables",
+   "note": "Only the first ending is canon.",
+   "mode": "Integrated Strategies"
+  },
+  {
+   "title": "Unrealized Realities",
+   "group": "act47side"
+  },
+  {
+   "title": "Ancient Forge",
+   "group": "act6d5"
+  },
+  {
+   "title": "Who is Real",
+   "group": "act16d5"
+  },
+  {
+   "title": "Invitation to Wine",
+   "group": "act15side"
+  },
+  {
+   "title": "People, a People",
+   "note": "Takes place roughly at the same time as Invitation to Wine. The storyline take place mostly in flashbacks. Flashback parts take place before Ancient Forge, but the “present day” parts take place here.",
+   "group": "act51side"
+  },
+  {
+   "title": "Episode 17: Critical Phase Transition",
+   "group": "main_17"
+  },
+  {
+   "title": "Where the Vernal Wind Never Blows",
+   "group": "act23side"
+  },
+  {
+   "title": "Here a People Sows",
+   "group": "act31side"
+  },
+  {
+   "title": "Such is the Joy of Our Reunion",
+   "group": "act40side"
+  },
+  {
+   "title": "Fantasy in the Mirage",
+   "group": "act19mini"
+  },
+  {
+   "title": "Sui’s Garden of Grotesqueries",
+   "note": "All endings are canon.",
+   "mode": "Integrated Strategies"
+  },
+  {
+   "title": "First of a Thousand Autumns",
+   "group": "act49side"
+  }
+ ],
+ "undated": [
+  "Beyond Here takes place before Under Tides.",
+  "Rewinding Breeze takes place after Episode 8 and before Phantom and Crimson Solitaire.",
+  "A Kazdelian Rescue and Sarkaz Furnaceside Fables take place after Episode 14."
+ ]
+}
