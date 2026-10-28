@@ -1071,13 +1071,18 @@ function bindSettings() {
   bindRange('#sMusic', 'music', v => Math.round(v * 100) + '%');
   bindRange('#sSfx', 'sfx', v => Math.round(v * 100) + '%');
   const nn = $('#sNick'); nn.value = settings.nickname; nn.oninput = () => { settings.nickname = nn.value || 'Doctor'; saveSettings(); };
-  $('#idxDate').textContent = IDX?.built || '';
+  $('#idxDate').textContent = (IDX?.built || '') + ' · app version 5';
 }
 
 /* ---------- boot ---------- */
 async function boot() {
   setStatus(); addEventListener('online', setStatus); addEventListener('offline', setStatus);
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => r.update()).catch(() => {});
+    let reloaded = false;   // a new version took over: reload once so it's what you see
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
+  }
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   if (!standalone && /iPhone|iPad/.test(navigator.userAgent)) $('#installHint').hidden = false;
   $('#installHint .x').onclick = () => { $('#installHint').hidden = true; };
